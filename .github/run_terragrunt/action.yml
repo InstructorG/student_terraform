@@ -1,0 +1,73 @@
+name: 'RUN TERRAGRUNT'
+description: 'INSTALL AND RUN TERRAGRUNT'
+inputs:
+  SPOKE:
+    description: 'ENVIRONMENT WHERE SECRETS ARE DECLARED'
+    required: true
+    type: string
+  WORKING_DIR:
+    description: 'WORKING_DIR WHERE TO EXECUTE TERRAGRUNT'
+    required: true
+    type: string
+  TERRAGRUNT_PATH:
+    description: 'RESOURCES INCLUDE IN TERRAGRUNT EXECUTION'
+    required: true
+    type: string
+  ACTION:
+    description: 'TERRAGRUNT ACTION (plan,apply)'
+    type: string
+    required: true
+    default: plan
+  AWS_ACCESS_KEY_ID:
+    type: string
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    type: string
+    required: true
+  AWS_DEFAULT_REGION:
+    type: string
+    required: true
+  AWS_ROLE_ARN:
+    type: string
+    required: true
+  GIT_USER:
+    type: string
+    required: true
+  GIT_PASSWORD:
+    type: string
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+        terraform_wrapper: false
+
+    - name: 'SETUP TERRAGRUNT'
+      uses: autero1/action-terragrunt@v1.1.0
+      with:
+        terragrunt_version: 0.46.3
+
+    - name: 'INSTALL AWS CLI'
+      id: install-aws-cli
+      uses: unfor19/install-aws-cli-action@master
+      with:
+        version: 2
+
+    - name: 'RUN TERRAGRUNT'
+      env:
+        AWS_EC2_METADATA_DISABLED : "true"
+      run: |
+        echo "RUN TERRAGRUNT ON ${{ inputs.WORKING_DIR }} , INCLUDE : ${{ inputs.TERRAGRUNT_PATH }}"
+        git config --global url."https://${{inputs.GIT_USER}}:${{inputs.GIT_PASSWORD}}@github.com".insteadOf "https://github.com"
+        
+        aws configure set aws_access_key_id ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws configure set default.region ${{ inputs.AWS_DEFAULT_REGION }}
+        aws configure set role_arn ${{ inputs.AWS_ROLE_ARN }}
+        aws configure set default.source_profile default
+        
+        cd "${{ inputs.WORKING_DIR }}"
+        terragrunt run-all ${{ inputs.ACTION }} --terragrunt-non-interactive --terragrunt-include-dir "./${{ inputs.TERRAGRUNT_PATH }}"
+      shell: bash
