@@ -1,0 +1,34 @@
+name: BUIL WHEN PUSH ON BRANCH
+run-name: BUILDING BRANCH ${{ github.ref }}
+
+on:
+  push:
+    branches:
+      - 'feature/*'
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: |
+          cd data && zip lambda.zip lambda_function.py
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: package
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+      - run: |
+           cd infrastructure/atelier_5 && terraform init
+
+      - run: |
+          cd infrastructure/atelier_5 && terraform test
+
+      - run: |
+           cd infrastructure/atelier_5 && terraform apply -auto-approve
