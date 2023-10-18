@@ -1,3 +1,8 @@
+resource "random_string" "random" {
+  special = false
+  length = 10
+  upper = false
+}
 
 resource "aws_s3_bucket" "s3_module" {
   bucket        = var.bucket_name
@@ -18,7 +23,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "iam_for_lambda" {
-  name               = "iam_for_lambda"
+  name               = "iam_for_lambda-${random_string.random.result}"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
   inline_policy {
     name = "my_inline_policy"
@@ -29,7 +34,7 @@ resource "aws_iam_role" "iam_for_lambda" {
         {
           Action = [
             "logs:CreateLogGroup", "logs:CreateLogStream",
-            "logs:PutLogEvents"
+            "logs:PutLogEvents","iam:PassRole"
           ]
           Effect   = "Allow"
           Resource = "*"

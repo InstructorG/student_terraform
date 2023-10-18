@@ -23,7 +23,7 @@ On souhaite créer un module dans le répertoire "module".
    - Le nom du compartiment S3 : "output_bucket_name".
    - Le nom de la fonction Lambda : "output_lambda_name".
 
-4. Générer la documentation avec terraform-docs.
+4. Générer la documentation avec terraform-docs. (terraform-docs markdown . > Readme.md)
 
 Indications :
 
